@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: session-prometheus
+  namespace: dev
+  labels:
+    app: session-prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: session-prometheus
+  template:
+    metadata:
+      labels:
+        app: session-prometheus
+    spec:
+      containers:
+      - name: session-prometheus
+        image: turgayozgur/session-prometheus:0.1
+        imagePullPolicy: Never # for only using local docker images on minikube. delete it for other k8s environments.
+        ports:
+          - containerPort: 8080
+    
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: session-prometheus
+  namespace: dev
+spec:
+  selector:
+    app: session-prometheus
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+
+---
+
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: session-prometheus-ingress
+  namespace: dev
+spec:
+  rules:
+  - host: session-prometheus.dev.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: session-prometheus
+          servicePort: 80

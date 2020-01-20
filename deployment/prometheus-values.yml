@@ -1,0 +1,99 @@
+commonLabels:
+  monitoring: prometheus-exporter
+  
+prometheus:
+  ingress:
+    enabled: true
+    hosts:
+      - prometheus.dev.com
+      
+  prometheusSpec:
+
+    serviceMonitorSelector:
+      matchLabels:
+        monitoring: prometheus-exporter
+
+    ruleSelector:
+      matchLabels:
+        monitoring: prometheus-exporter
+
+grafana:
+  adminPassword: prom
+  image:
+    tag: 6.5.2
+  ingress:
+    enabled: true
+    hosts:
+      - grafana.dev.com
+
+alertmanager:
+  ingress:
+    enabled: true
+    hosts:
+      - alertmanager.dev.com
+
+  config:
+    global:
+      resolve_timeout: 1m
+      slack_api_url: https://hooks.slack.com/services/xxx
+
+    templates:
+      - /etc/alertmanager/config/slack.tmpl
+
+    route:
+      group_by: ['job']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 1m
+      receiver: blackhole # this is the default channel
+      routes:
+      - match:
+          alertname: Watchdog
+        receiver: blackhole
+      - match:
+          alertname: KubeletDown
+        receiver: blackhole
+      - match:
+          severity: warning
+        receiver: slack_receiver
+      - match:
+          severity: error
+        receiver: slack_receiver
+      - match:
+          severity: critical
+        receiver: slack_receiver
+    receivers:
+    - name: blackhole
+    - name: slack_receiver
+      slack_configs:
+      - channel: '#alerts-session-prom'
+        text: '{{ template "slack.text" . }}'
+
+  templateFiles:
+    slack.tmpl: |-
+      {{ define "slack.text" }}
+      {{ range .Alerts }}
+      *Alert:* `{{ .Labels.severity }}` {{ if eq .Labels.severity "warning" }}:flushed:{{ else if eq .Labels.severity "error" }}:rage:{{ else }}:angry:{{ end }} {{ .Annotations.message }}
+      *Graph:* <{{ .GeneratorURL }}|:chart_with_upwards_trend:>
+      *Details:* {{ range .Labels.SortedPairs }}`{{ .Name }}: {{ .Value }}` {{ end }}
+      {{ end }}
+      {{ end }}
+
+kubeApiServer:
+  enabled: false
+kubelet:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+coreDns:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+kubeStateMetrics:
+  enabled: false
+nodeExporter:
+  enabled: false

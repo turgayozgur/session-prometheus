@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    monitoring: prometheus-exporter
+  name: prom-session-alert-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: prom-session
+    rules:
+    - alert: PaymentTransactionLow
+      annotations:
+        message: 'Bank {{ $labels.bank_type }} payment transaction count lower than usual for 1 minute interval. Current {{ $value }}'
+      expr: round(increase(session_prom_payment_duration_seconds_count[1m])) < 20
+      labels:
+        severity: critical
+      for: 5m
