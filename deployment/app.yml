@@ -29,6 +29,8 @@ kind: Service
 metadata:
   name: session-prometheus
   namespace: dev
+  labels:
+    app: session-prometheus
 spec:
   selector:
     app: session-prometheus

@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	handlerFn                fasthttp.RequestHandler
+	handlerFn              fasthttp.RequestHandler
 	payRequestsActiveGauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "session_prom_pay_requests_active",
@@ -21,14 +21,14 @@ var (
 		})
 	paymentDurationSummary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name:    "session_prom_payment_duration_seconds",
-			Help:    "Summary of payment duration seconds over last 10 minutes.",
+			Name:       "session_prom_payment_duration_seconds",
+			Help:       "Summary of payment duration seconds over last 10 minutes.",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		}, []string{"bank_type"})
 	paymentValueHistogram = prometheus.NewHistogram(
 		prometheus.HistogramOpts{
 			Name:    "session_prom_payment_value_tl",
-			Help:    "Histogram of received payment values (in TL).s",
+			Help:    "Histogram of received payment values (in TL)",
 			Buckets: []float64{20, 100, 200, 350, 500, 1000},
 		})
 )

@@ -9,10 +9,10 @@ metadata:
 spec:
   selector:
     matchLabels:
-      run: session-prometheus
+      app: session-prometheus
   namespaceSelector:
     matchNames:
-    - test
+    - dev
   endpoints:
   - interval: 5s
     path: /metrics
