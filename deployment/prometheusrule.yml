@@ -15,4 +15,4 @@ spec:
       expr: round(increase(session_prom_payment_duration_seconds_count[1m])) < 20
       labels:
         severity: critical
-      for: 5m
+      for: 1m

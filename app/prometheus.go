@@ -3,22 +3,20 @@ package main
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/valyala/fasthttp"
-	"github.com/valyala/fasthttp/fasthttpadaptor"
+	"net/http"
 )
 
 var (
-	handlerFn              fasthttp.RequestHandler
 	payRequestsActiveGauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "session_prom_pay_requests_active",
 			Help: "Number of pay requests processing.",
 		}, []string{"bank_type"})
-	paymentWithRecordedCardCounter = prometheus.NewCounter(
+	paymentWithRecordedCardCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "session_prom_payment_with_recorded_card_total",
 			Help: "Number of payment completed with recorded card.",
-		})
+		}, []string{"bank_type"})
 	paymentDurationSummary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name:       "session_prom_payment_duration_seconds",
@@ -31,6 +29,11 @@ var (
 			Help:    "Histogram of received payment values (in TL)",
 			Buckets: []float64{20, 100, 200, 350, 500, 1000},
 		})
+	paymentRequestFailedCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "session_prom_payment_failed_total",
+			Help: "Number of payment failed.",
+		}, []string{"bank_type"})
 )
 
 func init() {
@@ -40,10 +43,7 @@ func init() {
 	r.MustRegister(paymentWithRecordedCardCounter)
 	r.MustRegister(paymentDurationSummary)
 	r.MustRegister(paymentValueHistogram)
+	r.MustRegister(paymentRequestFailedCounter)
 
-	handlerFn = fasthttpadaptor.NewFastHTTPHandler(promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
-}
-
-func handleMetrics(ctx *fasthttp.RequestCtx) {
-	handlerFn(ctx)
+	http.Handle("/metrics", promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
 }

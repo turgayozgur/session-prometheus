@@ -68,12 +68,13 @@ alertmanager:
       slack_configs:
       - channel: '#alerts-session-prom'
         text: '{{ template "slack.text" . }}'
+        title: ''
 
   templateFiles:
     slack.tmpl: |-
       {{ define "slack.text" }}
       {{ range .Alerts }}
-      *Alert:* `{{ .Labels.severity }}` {{ if eq .Labels.severity "warning" }}:flushed:{{ else if eq .Labels.severity "error" }}:rage:{{ else }}:angry:{{ end }} {{ .Annotations.message }}
+      *Alert:* {{ .Annotations.message }}
       *Graph:* <{{ .GeneratorURL }}|:chart_with_upwards_trend:>
       *Details:* {{ range .Labels.SortedPairs }}`{{ .Name }}: {{ .Value }}` {{ end }}
       {{ end }}

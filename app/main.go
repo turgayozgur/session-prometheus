@@ -3,46 +3,40 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/valyala/fasthttp"
 	"log"
+	"net/http"
 	"time"
 )
 
-func main(){
-	m := func(ctx *fasthttp.RequestCtx) {
-		defer func() {
-			if rc := recover(); rc != nil {
-				ctx.WriteString(fmt.Sprintf("Something went wrong! %v", rc))
-			}
-		}()
-		switch string(ctx.Path()) {
-		case "/pay":
-			pay(ctx)
-		case "/metrics":
-			handleMetrics(ctx)
-		}
-	}
+func main() {
+	http.HandleFunc("/pay", pay)
+
 	log.Print("Listening on port 8080...")
-	fasthttp.ListenAndServe(":8080", m)
+	http.ListenAndServe(":8080", nil)
 }
 
 type PayRequest struct {
-	Total float64
+	Total           float64
 	RecordedCardKey string
-	BankType string
+	BankType        string
 }
 
-func pay(ctx *fasthttp.RequestCtx) {
+func pay(w http.ResponseWriter, r *http.Request) {
 	request := &PayRequest{}
-	err := json.Unmarshal(ctx.Request.Body(), request)
+	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
-		ctx.WriteString(fmt.Sprintf("Can't read body %v", err))
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	start := time.Now()
 
 	defer func() {
+		if rc := recover(); rc != nil {
+			// metric counter increment failed payment requests.
+			paymentRequestFailedCounter.WithLabelValues(request.BankType).Inc()
+		}
+
 		// metric gauge decrease active payment requests.
 		payRequestsActiveGauge.WithLabelValues(request.BankType).Dec()
 
@@ -55,7 +49,7 @@ func pay(ctx *fasthttp.RequestCtx) {
 
 	if request.RecordedCardKey != "" {
 		// metric counter for payments with recorded card count.
-		paymentWithRecordedCardCounter.Inc()
+		paymentWithRecordedCardCounter.WithLabelValues(request.BankType).Inc()
 	}
 
 	switch request.BankType {
@@ -68,15 +62,15 @@ func pay(ctx *fasthttp.RequestCtx) {
 	// metric histogram for payment completed with total price.
 	paymentValueHistogram.Observe(request.Total)
 
-	ctx.WriteString("OK")
+	fmt.Fprintf(w, "Success")
 }
 
-func payA(request PayRequest) error {
+func payA(request PayRequest) {
 	randomlyWait(50)
-	return randomlyError(request.BankType)
+	randomlyError(request.BankType)
 }
 
-func payB(request PayRequest) error {
+func payB(request PayRequest) {
 	randomlyWait(120)
-	return randomlyError(request.BankType)
+	randomlyError(request.BankType)
 }
