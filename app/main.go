@@ -32,16 +32,17 @@ func pay(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
 	defer func() {
-		if rc := recover(); rc != nil {
-			// metric counter increment failed payment requests.
-			paymentRequestFailedCounter.WithLabelValues(request.BankType).Inc()
-		}
-
 		// metric gauge decrease active payment requests.
 		payRequestsActiveGauge.WithLabelValues(request.BankType).Dec()
 
 		// metric summary for payment duration.
 		paymentDurationSummary.WithLabelValues(request.BankType).Observe(time.Since(start).Seconds())
+
+		if rc := recover(); rc != nil {
+			// metric counter increment failed payment requests.
+			paymentRequestFailedCounter.WithLabelValues(request.BankType).Inc()
+			http.Error(w, fmt.Sprint(r), http.StatusInternalServerError)
+		}
 	}()
 
 	// metric gauge increase active payment requests.

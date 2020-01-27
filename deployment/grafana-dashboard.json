@@ -61,7 +61,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(session_prom_payment_value_tl_sum{pod=~\"$pod\"}) by (pod) / sum(session_prom_payment_value_tl_count{pod=~\"$pod\"}) by (pod)",
+          "expr": "sum(increase(session_prom_payment_value_tl_sum{pod=~\"$pod\"}[1m])) by (pod) / sum(increase(session_prom_payment_value_tl_count{pod=~\"$pod\"}[1m])) by (pod) OR vector(0)",
           "legendFormat": "{{ pod }}",
           "refId": "A"
         }
