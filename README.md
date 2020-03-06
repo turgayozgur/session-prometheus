@@ -34,7 +34,7 @@ kubectl set image deployment/session-prometheus -n dev session-prometheus=turgay
 kubectl apply -f deployment/servicemonitor.yml
 
 # Make some load.
-kubectl run -i --restart=Never --rm fortio --image=fortio/fortio -n dev -- load -qps 2 -c 2 -t 0 -H "Content-Type: application/json" --payload '{"total": 200, "bankType": "A", "recordedcardkey": "testcard1"}' http://session-prometheus.dev/pay
+kubectl run -i --restart=Never --rm fortio --image=fortio/fortio -n dev -- load -qps 2 -c 2 -t 0 -H "Content-Type: application/json" --payload '{"total": 200, "bankType": "A", "recordedcardkey": "testcard1"}' http://session-prometheus.dev.com/pay
 
 # Enable prometheus rule.
 kubectl apply -f deployment/prometheusrule.yml
